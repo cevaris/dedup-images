@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 
 from PIL import Image
 from PIL.ExifTags import TAGS
@@ -7,9 +8,31 @@ from PIL.ExifTags import TAGS
 images = set()
 
 
+class AnImage(object):
+    def __init__(self, model, filename, image_path) -> None:
+        super().__init__()
+        self.model = model
+        self.filename = filename
+        self.image_path = image_path
+
+    def __eq__(self, other):
+        return self.model == other.model and self.filename == other.filename
+
+    def __hash__(self):
+        return hash(('model', self.model, 'filename', self.filename))
+
+    # def __lt__(self, other):
+    #     return (self.model, self.filename) < (other.model, other.filename)
+
+
+# https://www.thepythoncode.com/article/extracting-image-metadata-in-python
 def get_model(image_path):
     response = None
     image = Image.open(image_path)
+
+    # desktop screenshots (~10)
+    if image_path.endswith(".png"):
+        return 'png'
 
     exifdata = image.getexif()
     for tag_id in exifdata:
@@ -20,6 +43,10 @@ def get_model(image_path):
             if isinstance(response, bytes):
                 response = response.decode()
             # print(f"{tag}: {response}")
+
+    # edited jpg's (2)
+    if response == None:
+        return 'unknown'
 
     return response
 
@@ -34,9 +61,7 @@ def collect(directory):
         else:
             model = get_model(image_path)
 
-        key = f"{model}:{filename}"
-        images.add(key)
-        # print(key)
+        images.add(AnImage(model, filename, image_path))
 
 
 if len(sys.argv) != 3:
@@ -47,5 +72,5 @@ collect(sys.argv[1])
 collect(sys.argv[2])
 
 images = list(images)
-images.sort()
-print('\n'.join(images))
+images = sorted(images, key=lambda x: (x.filename))
+print('\n'.join([o.image_path for o in images]))
