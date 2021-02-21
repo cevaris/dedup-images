@@ -1,6 +1,5 @@
 import sys
 import os
-import shutil
 
 from PIL import Image
 from PIL.ExifTags import TAGS
@@ -73,4 +72,4 @@ collect(sys.argv[2])
 
 images = list(images)
 images = sorted(images, key=lambda x: (x.filename))
-print('\n'.join([o.image_path for o in images]))
+print('\n'.join([f'{o.image_path}:{o.model}' for o in images]))
