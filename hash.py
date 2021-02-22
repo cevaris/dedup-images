@@ -44,8 +44,7 @@ collect(sys.argv[1])
 collect(sys.argv[2])
 
 for k, v in media.items():
-    if(len(v) > 1):
-        # sort filenames by length for consistency
-        # and to get original file
-        v = sorted(v, key=lambda x: len(Path(x.media_path).name))
-        print(f'{k} -> {[x.media_path for x in v]}')
+    # sort filenames by length for consistency
+    # and to get original file
+    v = sorted(v, key=lambda x: len(Path(x.media_path).name))
+    print([x.media_path for x in v][0])
