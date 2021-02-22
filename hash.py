@@ -5,6 +5,10 @@ import hashlib
 # https://pypi.org/project/ImageHash/
 # if we want to remove near duplicates
 
+# https://stackoverflow.com/questions/16874598/how-do-i-calculate-the-md5-checksum-of-a-file-in-python
+
+media = {}
+
 
 class Media(object):
     def __init__(self, media_path, hash) -> None:
@@ -19,25 +23,26 @@ class Media(object):
         return hash(('hash', self.hash))
 
 
+def collect(directory):
+    for filename in os.listdir(directory):
+        media_path = os.path.join(directory, filename)
+
+        with open(media_path, 'rb') as fd:
+            hash = hashlib.md5(fd.read()).hexdigest()
+
+            if hash in media:
+                media[hash].append(Media(media_path, hash))
+            else:
+                media[hash] = [Media(media_path, hash)]
+
+
 if len(sys.argv) != 2:
     exit('missing directory arg')
 
-
-media = {}
-directory = sys.argv[1]
-for filename in os.listdir(directory):
-    media_path = os.path.join(directory, filename)
-
-    with open(media_path, 'rb') as fd:
-        hash = hashlib.md5(fd.read()).hexdigest()
-
-        if hash in media:
-            media[hash].append(Media(media_path, hash))
-            # print(
-            #     f'{hash} -> {[x.media_path for x in media[hash]]} + {media_path}')
-        else:
-            media[hash] = [Media(media_path, hash)]
+collect(sys.argv[1])
 
 for k, v in media.items():
     if(len(v) > 1):
+        # sort filenames for consistency
+        v = sorted(v, key=lambda x: x.media_path)
         print(f'{k} -> {[x.media_path for x in v]}')
