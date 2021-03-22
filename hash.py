@@ -3,6 +3,7 @@ import os
 import hashlib
 from pathlib import Path
 
+
 # https://pypi.org/project/ImageHash/
 # if we want to remove near duplicates
 
@@ -47,4 +48,13 @@ for k, v in media.items():
     # sort filenames by length for consistency
     # and to get original file
     v = sorted(v, key=lambda x: len(Path(x.media_path).name))
+
+    # does not work as hiec/jpg will have different hashes
+    # has_hiec = any('hiec' in x.media_path.lower() for x in v)
+    # has_jpg = any('jpg' in x.media_path.lower() for x in v)
+    # if has_hiec and has_jpg:
+    #     # duplicate jpeg/heic, removing jpeg
+    #     v = filter(v, lambda x: 'hiec' in x.media_path.lower())
+    #     print(f'dropping duplicate jpeg {v}')
+
     print([x.media_path for x in v][0])
