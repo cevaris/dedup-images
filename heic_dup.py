@@ -40,6 +40,12 @@ with Pool(5) as p:
         else:
             media[k] = [v]
 
+    for k, v in maps[2].items():
+        if k in media:
+            media[k] = media[k] + v
+        else:
+            media[k] = [v]
+
     for k, v in media.items():
         # sort filenames by length for consistency
         # and to get original file
