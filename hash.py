@@ -38,11 +38,13 @@ def collect(directory):
                 media[hash] = [Media(media_path, hash)]
 
 
-if len(sys.argv) != 3:
+if len(sys.argv) != 5:
     exit('missing directory arg')
 
 collect(sys.argv[1])
 collect(sys.argv[2])
+collect(sys.argv[3])
+collect(sys.argv[4])
 
 for k, v in media.items():
     # sort filenames by length for consistency
