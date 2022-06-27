@@ -14,6 +14,9 @@ def collect(directory):
         media_path = os.path.join(directory, filename)
         name = pathlib.Path(media_path).name
 
+        if '-unknown' in media_path:
+            continue
+
         match = p.search(name)
         if match:
             key = match.group(1)
@@ -24,13 +27,13 @@ def collect(directory):
     return media
 
 
-if len(sys.argv) != 4:
+if len(sys.argv) != 5:
     exit('missing directory arg')
 
 sets = None
 with Pool(5) as p:
-    maps = p.map(collect, [sys.argv[1], sys.argv[2], sys.argv[3]])
-    print(len(maps), len(maps[0]), len(maps[1]), len(maps[2]))
+    maps = p.map(collect, [sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]])
+    print(len(maps), len(maps[0]), len(maps[1]), len(maps[2]), len(maps[3]))
 
     # merge results
     media = maps[0]
@@ -41,6 +44,12 @@ with Pool(5) as p:
             media[k] = [v]
 
     for k, v in maps[2].items():
+        if k in media:
+            media[k] = media[k] + v
+        else:
+            media[k] = [v]
+
+    for k, v in maps[3].items():
         if k in media:
             media[k] = media[k] + v
         else:

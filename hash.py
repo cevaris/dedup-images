@@ -2,6 +2,7 @@ import sys
 import os
 import hashlib
 from pathlib import Path
+import exifread
 
 
 # https://pypi.org/project/ImageHash/
@@ -29,7 +30,14 @@ def collect(directory):
     for filename in os.listdir(directory):
         media_path = os.path.join(directory, filename)
 
+        if '-unknown' in media_path:
+            continue
+
         with open(media_path, 'rb') as fd:
+            # tags = exifread.process_file(fd)
+            # if 'Image Model' in tags:
+            #     print(tags['Image Model'], media_path)
+
             hash = hashlib.md5(fd.read()).hexdigest()
 
             if hash in media:
@@ -59,4 +67,6 @@ for k, v in media.items():
     #     v = filter(v, lambda x: 'hiec' in x.media_path.lower())
     #     print(f'dropping duplicate jpeg {v}')
 
-    print([x.media_path for x in v][0])
+    for f in v:
+        print(f.media_path)
+    # print([x.media_path for x in v][0])

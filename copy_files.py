@@ -9,7 +9,7 @@ if len(sys.argv) != 2:
     exit('missing directory arg')
 
 # watch 'ls -l /Users/acardenas/Downloads/union| wc -l'
-dest_dir = '/Users/acardenas/Downloads/union/'
+dest_dir = '/Users/acardenas/Downloads/union-hash/'
 os.mkdir(dest_dir)
 
 filepath = sys.argv[1]
