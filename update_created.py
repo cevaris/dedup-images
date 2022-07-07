@@ -44,6 +44,12 @@ def get_tags(filename):
         if 'mp4' in path.suffix.lower():
             return
             for stream in ffmpeg.probe(filename)["streams"]:
+
+                # NOTE: We should filter live motion videos elsehow. There are some videos that are short lengthed.
+                # # skip live motion MP4 files
+                # if float(stream['duration']) < 4:
+                #     return
+
                 if stream["tags"]["creation_time"]:
                     # 2019-12-09T03:58:04.000000Z
                     created_at_str = stream["tags"]["creation_time"]
@@ -54,12 +60,19 @@ def get_tags(filename):
                     return
 
         if 'mov' in path.suffix.lower():
-            return
             parser = createParser(filename)
             metadata = extractMetadata(parser)
+
+            # NOTE: We should filter live motion videos elsehow. There are some videos that are short lengthed.
+            # # skip live motion MOV files
+            # if metadata.get("duration").total_seconds() < 3:
+            #     print(path, 'skipping live motion', metadata.get("duration").total_seconds())
+            #     return
+
             # 2019-12-11 03:03:41
             created_at = metadata.get('creation_date')
-            print(path, created_at)
+            print(path, created_at, metadata.get('duration').total_seconds())
+            # append_media(created_at, path)
             return
 
         if 'heic' in path.suffix.lower():
@@ -76,10 +89,12 @@ def get_tags(filename):
                             created_at = datetime.strptime(
                                 created_at_str, '%Y:%m:%d %H:%M:%S'
                             )
-                            print(path, created_at_str, created_at)
+                            # print(path, created_at_str, created_at)
+                            append_media(created_at, path)
                             return
 
         if path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
+            return
             with open(filename, 'rb') as f:
                 tags = exifread.process_file(f)
                 for tag in tags.keys():
@@ -88,8 +103,7 @@ def get_tags(filename):
                         created_at = datetime.strptime(
                             created_at_str, '%Y:%m:%d %H:%M:%S'
                         )
-                        print(path, created_at_str, created_at)
-                        # print(path, "Key: %s, value %s" % (tag, tags[tag]))
+                        append_media(created_at, path)
                         return
 
     except BaseException as error:
@@ -103,15 +117,27 @@ def cleanDirectoryPath(dirPath: pathlib.Path):
     return dirPath.name.replace(" ", "-").lower()
 
 
-def append_media(created_at: datetime, path: pathlib.Path):
-    media_file = MediaFile(created_at, path, path)
-    key = f'{created_at}:{path.name.lower()}'
+def append_media(created_at: datetime, curr_path: pathlib.Path):
+    # key = f'{created_at}:{curr_path.name.lower()}'
+    # since we have timestamps for every file, we should be able to dedup
+    key = f'{created_at}'
+    suffix = curr_path.suffix
+    if curr_path.suffix.lower() == '.mov-unknown':
+        suffix = '.mov'
+
+    target_name = "{0}-{1}{2}".format(curr_path.name,
+                                      cleanDirectoryPath(curr_path.parents[0]), suffix)
+    target_path = pathlib.Path(os.path.join(TARGET_DIR, target_name))
+
+    media_file = MediaFile(created_at, curr_path, target_path)
+
     if key in media:
         media[key].append(media_file)
     else:
         media[key] = [media_file]
 
 
+TARGET_DIR = '~/Downloads/nz-au/datetime_name_excluded_merge/'
 # datetime:image => MediaFile[]
 media = {}
 executor = ThreadPoolExecutor()
@@ -126,3 +152,7 @@ def collect(directory):
 
 
 collect(sys.argv[1])
+
+# for k, v in media.items():
+#     v = sorted(v, key=lambda m: m.src_path)
+# print(k, v)
