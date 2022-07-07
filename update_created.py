@@ -34,14 +34,14 @@ class MediaFile(object):
 
 
 def get_tags(filename):
-    path = pathlib.Path(filename)
+    curr_path = pathlib.Path(filename)
 
     try:
-        if 'gif' in path.suffix.lower():
-            print('skipping gif', path)
+        if 'gif' in curr_path.suffix.lower():
+            print('skipping gif', curr_path)
             return
 
-        if 'mp4' in path.suffix.lower():
+        if 'mp4' in curr_path.suffix.lower():
             return
             for stream in ffmpeg.probe(filename)["streams"]:
 
@@ -56,10 +56,11 @@ def get_tags(filename):
                     created_at = datetime.strptime(
                         created_at_str, '%Y-%m-%dT%H:%M:%S.%fZ'
                     )
-                    append_media(created_at, path)
+                    append_media(created_at, curr_path)
                     return
 
-        if 'mov' in path.suffix.lower():
+        if 'mov' in curr_path.suffix.lower():
+            return
             parser = createParser(filename)
             metadata = extractMetadata(parser)
 
@@ -71,11 +72,11 @@ def get_tags(filename):
 
             # 2019-12-11 03:03:41
             created_at = metadata.get('creation_date')
-            print(path, created_at, metadata.get('duration').total_seconds())
+            print(curr_path, created_at, metadata.get('duration').total_seconds())
             # append_media(created_at, path)
             return
 
-        if 'heic' in path.suffix.lower():
+        if 'heic' in curr_path.suffix.lower():
             return
             heif_file = pyheif.read(filename)
             for metadata in heif_file.metadata:
@@ -84,26 +85,28 @@ def get_tags(filename):
 
                     tags = exifread.process_file(fstream, details=False)
                     for tag in tags.keys():
+                        print(curr_path, "Key: %s, value %s" % (tag, tags[tag]))
                         if 'DateTimeOriginal' in tag:
                             created_at_str = str(tags[tag])
                             created_at = datetime.strptime(
                                 created_at_str, '%Y:%m:%d %H:%M:%S'
                             )
                             # print(path, created_at_str, created_at)
-                            append_media(created_at, path)
+                            append_media(created_at, curr_path)
                             return
 
-        if path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
+        if curr_path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
             return
             with open(filename, 'rb') as f:
                 tags = exifread.process_file(f)
                 for tag in tags.keys():
+                    # print(path, "Key: %s, value %s" % (tag, tags[tag]))
                     if 'DateTimeOriginal' in tag:
                         created_at_str = str(tags[tag])
                         created_at = datetime.strptime(
                             created_at_str, '%Y:%m:%d %H:%M:%S'
                         )
-                        append_media(created_at, path)
+                        append_media(created_at, curr_path)
                         return
 
     except BaseException as error:
