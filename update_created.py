@@ -44,6 +44,7 @@ def get_tags(filename: str, store: dict):
             return
 
         # NOTE looks like Leftovers is the only one with a .mp4 suffix
+        # TODO: confirm if MP4s are seemingly 11 hours behind the photos
         if 'mp4' in curr_path.suffix.lower():
             for stream in ffmpeg.probe(filename)["streams"]:
 
@@ -62,7 +63,9 @@ def get_tags(filename: str, store: dict):
                     # print ('found mp4', curr_path, created_at)
                     return
 
-        # TODO: confirm why MOV is 11 hours behind the photos
+        # TODO: confirm why MOV is seemingly 11 hours behind the photos
+        #       Looks like Media Group UUID && Content Identifier could be match mov/photos
+        #       https://github.com/photoprism/photoprism/issues/1885
         if 'mov' in curr_path.suffix.lower():
             parser = createParser(filename)
             metadata = extractMetadata(parser)
