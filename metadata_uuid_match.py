@@ -7,6 +7,7 @@ import os
 import pathlib
 import pprint
 import re
+import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime
@@ -107,6 +108,37 @@ def has_video(medias: List[MediaFile]) -> bool:
 def has_img(medias: List[MediaFile]) -> bool:
     return has_suffix('jpg', medias) or has_suffix('jpeg', medias) or has_suffix('png', medias) or has_suffix('heic', medias)
 
+def pick_img(medias: List[MediaFile]) -> MediaFile:
+    return list(filter(lambda x: x.target_path.suffix.lower() in ['.jpeg', '.jpg', '.png', '.heic'], medias))[0]
+def pick_video(medias: List[MediaFile]) -> MediaFile:
+    return list(filter(lambda x: x.target_path.suffix.lower() in ['.mov', '.mp4'], medias))[0]
+
+def post_process(store: dict):
+    for k, v in store.items():
+        # print(k, [f.src_path for f in v])
+
+        # if media contains heic/jpg/jpeg/png & MOV, drop MOV
+        # if media contains heic/jpg/jpeg/png & MP4, drop MP4
+        if(has_video(v) and has_img(v)):
+        # if has_img(v):
+            img = pick_img(v)
+            video = pick_video(v)
+            print(f'pick id={k} img={img.target_path} video={video.target_path}')
+            # shutil.move(img.src_path, img.target_path)
+            # shutil.move(video.src_path, video.target_path)
+            continue
+
+        if has_img(v):
+            img = pick_img(v)
+            print(f'pick id={k} img={img.target_path}')
+            # shutil.move(img.src_path, img.target_path)
+            continue
+
+        if(has_video(v)):
+            video = pick_video(v)
+            print(f'pick id={k} video={video.target_path}')
+            # shutil.move(video.src_path, video.target_path)
+            continue
 
 TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/datetime_name_excluded_merge/'
 EXCLUSION_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/NZ AU leftovers/'
@@ -126,7 +158,6 @@ exclude_md5 = {}
 futures = []
 
 executor = ThreadPoolExecutor()
-
 
 def collect(directory):
     print('collecting', directory)
@@ -173,36 +204,10 @@ for key in exclude_md5_keys:
     if key in include_md5:
         del include_md5[key]
 
-# for k, v in media.items():
-#     # print(k, [f.src_path for f in v])
-
-#     # NOTE: the motion MOV files are timestamped seconds after the photo was taken, so not the same timestmap :(
-#     # TODO: determine an algo to find MOVs that are a motion photo
-#     # if media contains heic/jpg/jpeg/png & MOV, drop MOV
-#     # if media contains heic/jpg/jpeg/png & MP4, drop MP4
-#     # if(has_video(v) and has_img(v)):
-#     if has_img(v):
-#         print('pick image', k, [mf.src_path.name for mf in v])
-#         pass
-
-#         # # remove all videos
-#         # v = remove_suffix('mov', v)
-#         # v = remove_suffix('mp4', v)
-#         # media[k] = v
-
-#         # # keep single png/jpg/jpeg/heic
-#         # # pick single image
-#         # # v = sorted(v, key=lambda m: m.src_path)
-#         # print('pick image', k, [mf.src_path.name for mf in v])
-#         # pass
-
-#     if(has_video(v)):
-#         # pick video
-#         print('pick video', k, [mf.src_path.name for mf in v])
-#         pass
-
 print(f'found {len(include_uuid)} uuid media files')
-print(f'found {len(include_md5)} md5 media files')
-
+post_process(include_uuid)
 pp.pprint(include_uuid)
+
+print(f'found {len(include_md5)} md5 media files')
+post_process(include_md5)
 pp.pprint(include_md5)
