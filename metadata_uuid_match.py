@@ -141,7 +141,7 @@ def post_process(store: dict):
             media_counter += 1
             continue
 
-TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/datetime_name_excluded_merge_stills/'
+TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/final_datetime_name_excluded_merge_stills/'
 EXCLUSION_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/NZ AU leftovers/'
 DIRS = [
     f'{pathlib.Path.home()}/Downloads/nz-au/Auckland NZ Pics',
