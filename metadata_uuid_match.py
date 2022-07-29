@@ -6,11 +6,9 @@ import hashlib
 import os
 import pathlib
 import pprint
-import re
 import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor, wait
-from datetime import datetime
 from typing import List
 
 # exiftool
@@ -42,7 +40,7 @@ def get_tags(filename: str, md5_store: dict, uuid_store: dict):
 
     try:
         if 'gif' in curr_path.suffix.lower():
-            print('gif', curr_path.name, 'skipping')
+            # print('gif', curr_path.name, 'skipping')
             return
 
         # looks like there are some MOVs that were compressed by Google, and stripped of the metadata
@@ -51,22 +49,22 @@ def get_tags(filename: str, md5_store: dict, uuid_store: dict):
         
             if 'QuickTime:ContentIdentifier' in metadata[0]: # MOV
                 uuid = metadata[0]['QuickTime:ContentIdentifier']
-                print('video', curr_path, uuid)
+                # print('video', curr_path, uuid)
                 append_media(uuid_store, uuid, curr_path)
                 return
             elif 'MakerNotes:MediaGroupUUID' in metadata[0]: # images 
                 uuid = metadata[0]['MakerNotes:MediaGroupUUID']
-                print('photo', curr_path, uuid)
+                # print('photo', curr_path, uuid)
                 append_media(uuid_store, uuid, curr_path)
                 return
             elif 'EXIF:Model' in metadata[0] and CANON_POWERSHOT in metadata[0]['EXIF:Model']: # canon
                 md5 = get_md5(curr_path)
-                print('cannon', curr_path, md5)
+                # print('cannon', curr_path, md5)
                 append_media(md5_store, md5, curr_path)
                 return
             else:
                 md5 = get_md5(curr_path)
-                print('unknown', curr_path, md5)
+                # print('unknown', curr_path, md5)
                 append_media(md5_store, md5, curr_path)
                 return
             
@@ -113,34 +111,37 @@ def pick_img(medias: List[MediaFile]) -> MediaFile:
 def pick_video(medias: List[MediaFile]) -> MediaFile:
     return list(filter(lambda x: x.target_path.suffix.lower() in ['.mov', '.mp4'], medias))[0]
 
-def post_process(store: dict):
-    for k, v in store.items():
-        # print(k, [f.src_path for f in v])
 
+def post_process(store: dict):
+    global media_counter
+    for k, v in store.items():
         # if media contains heic/jpg/jpeg/png & MOV, drop MOV
         # if media contains heic/jpg/jpeg/png & MP4, drop MP4
         if(has_video(v) and has_img(v)):
         # if has_img(v):
             img = pick_img(v)
-            video = pick_video(v)
-            print(f'pick id={k} img={img.target_path} video={video.target_path}')
-            # shutil.move(img.src_path, img.target_path)
+            # video = pick_video(v)
+            # print(f'pick id={k} img={img.target_path} video={video.target_path}')
+            shutil.move(img.src_path, img.target_path)
             # shutil.move(video.src_path, video.target_path)
+            media_counter += 1
             continue
 
         if has_img(v):
             img = pick_img(v)
-            print(f'pick id={k} img={img.target_path}')
-            # shutil.move(img.src_path, img.target_path)
+            # print(f'pick id={k} img={img.target_path}')
+            shutil.move(img.src_path, img.target_path)
+            media_counter += 1
             continue
 
         if(has_video(v)):
             video = pick_video(v)
-            print(f'pick id={k} video={video.target_path}')
-            # shutil.move(video.src_path, video.target_path)
+            # print(f'pick id={k} video={video.target_path}')
+            shutil.move(video.src_path, video.target_path)
+            media_counter += 1
             continue
 
-TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/datetime_name_excluded_merge/'
+TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/datetime_name_excluded_merge_stills/'
 EXCLUSION_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/NZ AU leftovers/'
 DIRS = [
     f'{pathlib.Path.home()}/Downloads/nz-au/Auckland NZ Pics',
@@ -154,6 +155,7 @@ exclude_uuid = {}
 
 include_md5 = {}
 exclude_md5 = {}
+media_counter = 0
 
 futures = []
 
@@ -211,3 +213,5 @@ pp.pprint(include_uuid)
 print(f'found {len(include_md5)} md5 media files')
 post_process(include_md5)
 pp.pprint(include_md5)
+
+print(f'deduped media files count: {media_counter}')
