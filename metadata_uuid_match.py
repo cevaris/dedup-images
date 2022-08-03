@@ -3,12 +3,14 @@
 # https://www.thepythoncode.com/article/extract-media-metadata-in-python
 
 import hashlib
+import json
 import os
 import pathlib
 import pprint
 import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor, wait
+from importlib.metadata import metadata
 from typing import List
 
 # exiftool
@@ -44,31 +46,30 @@ def get_tags(filename: str, md5_store: dict, uuid_store: dict):
             return
 
         # looks like there are some MOVs that were compressed by Google, and stripped of the metadata
-        with exiftool.ExifToolHelper() as et:
-            metadata = et.get_metadata(curr_path)
+        metadata = media_metadata_dict[filename]
+    
+        if metadata['type'] == 'UUID_CONTENT_IDENTIFIER': # MOV
+            uuid = metadata['id']
+            # print('video', curr_path, uuid)
+            append_media(uuid_store, uuid, curr_path)
+            return
+        elif metadata['type'] == 'UUID_MEDIA_GROUP_ID': # images 
+            uuid = metadata['id']
+            # print('photo', curr_path, uuid)
+            append_media(uuid_store, uuid, curr_path)
+            return
+        elif metadata['type'] == 'MD5_CANNON_POWERSHOT': # canon
+            md5 = metadata['id']
+            # print('cannon', curr_path, md5)
+            append_media(md5_store, md5, curr_path)
+            return
+        else:
+            md5 = metadata['id']
+            # print('unknown', curr_path, md5)
+            append_media(md5_store, md5, curr_path)
+            return
         
-            if 'QuickTime:ContentIdentifier' in metadata[0]: # MOV
-                uuid = metadata[0]['QuickTime:ContentIdentifier']
-                # print('video', curr_path, uuid)
-                append_media(uuid_store, uuid, curr_path)
-                return
-            elif 'MakerNotes:MediaGroupUUID' in metadata[0]: # images 
-                uuid = metadata[0]['MakerNotes:MediaGroupUUID']
-                # print('photo', curr_path, uuid)
-                append_media(uuid_store, uuid, curr_path)
-                return
-            elif 'EXIF:Model' in metadata[0] and CANON_POWERSHOT in metadata[0]['EXIF:Model']: # canon
-                md5 = get_md5(curr_path)
-                # print('cannon', curr_path, md5)
-                append_media(md5_store, md5, curr_path)
-                return
-            else:
-                md5 = get_md5(curr_path)
-                # print('unknown', curr_path, md5)
-                append_media(md5_store, md5, curr_path)
-                return
-            
-            sys.exit(f'could not categorize {curr_path}')
+        sys.exit(f'could not categorize {curr_path}')
     except BaseException as error:
         sys.exit("Failed to parse %s - %s" % (filename, error))
 
@@ -113,34 +114,31 @@ def pick_video(medias: List[MediaFile]) -> MediaFile:
 
 
 def post_process(store: dict):
-    global media_counter
     for k, v in store.items():
         # if media contains heic/jpg/jpeg/png & MOV, drop MOV
         # if media contains heic/jpg/jpeg/png & MP4, drop MP4
         if(has_video(v) and has_img(v)):
-        # if has_img(v):
             img = pick_img(v)
-            # video = pick_video(v)
-            # print(f'pick id={k} img={img.target_path} video={video.target_path}')
-            shutil.move(img.src_path, img.target_path)
+            video = pick_video(v)
+            print(f'pick id={k} img={img.target_path} video={video.target_path}')
+            # shutil.move(img.src_path, img.target_path)
             # shutil.move(video.src_path, video.target_path)
-            media_counter += 1
             continue
 
         if has_img(v):
             img = pick_img(v)
-            # print(f'pick id={k} img={img.target_path}')
-            shutil.move(img.src_path, img.target_path)
-            media_counter += 1
+            print(f'pick id={k} img={img.target_path}')
+            # shutil.move(img.src_path, img.target_path)
             continue
 
         if(has_video(v)):
             video = pick_video(v)
-            # print(f'pick id={k} video={video.target_path}')
-            shutil.move(video.src_path, video.target_path)
-            media_counter += 1
+            print(f'pick id={k} video={video.target_path}')
+            # shutil.move(video.src_path, video.target_path)
             continue
 
+
+CACHE_FILE = f'{pathlib.Path.home()}/Downloads/nz-au/media_meta_files.json'
 TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/final_datetime_name_excluded_merge_stills/'
 EXCLUSION_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/NZ AU leftovers/'
 DIRS = [
@@ -150,12 +148,19 @@ DIRS = [
     f'{pathlib.Path.home()}/Downloads/nz-au/NZ-AU Adam Photos All Original',
 ]  
 
+# filepath -> metadata
+media_metadata_dict = {}
+with open(CACHE_FILE) as f:
+    lines = f.readlines()
+    media_metadata_list = json.loads(''.join(lines)) 
+    for media_metadata in media_metadata_list:
+        media_metadata_dict[media_metadata['path']] = media_metadata
+
 include_uuid = {}
 exclude_uuid = {}
 
 include_md5 = {}
 exclude_md5 = {}
-media_counter = 0
 
 futures = []
 
@@ -165,7 +170,7 @@ def collect(directory):
     print('collecting', directory)
     for filename in os.listdir(directory):
         media_path = os.path.join(directory, filename)
-        futures.append(executor.submit(get_tags, media_path, include_md5, include_uuid))
+        get_tags(media_path, include_md5, include_uuid)
 
 
 for dir in DIRS:
@@ -174,7 +179,7 @@ for dir in DIRS:
 print('collecting exclusion dir', EXCLUSION_DIR)
 for filename in os.listdir(EXCLUSION_DIR):
     media_path = os.path.join(EXCLUSION_DIR, filename)
-    futures.append(executor.submit(get_tags, media_path, exclude_md5, exclude_uuid))
+    get_tags(media_path, exclude_md5, exclude_uuid)
 
 wait(futures)
 executor.shutdown()
@@ -213,5 +218,3 @@ pp.pprint(include_uuid)
 print(f'found {len(include_md5)} md5 media files')
 post_process(include_md5)
 pp.pprint(include_md5)
-
-print(f'deduped media files count: {media_counter}')
