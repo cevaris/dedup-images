@@ -122,25 +122,25 @@ def post_process(store: dict):
             img = pick_img(v)
             video = pick_video(v)
             print(f'pick id={k} img={img.target_path} video={video.target_path}')
-            # shutil.copy2(img.src_path, img.target_path)
-            # shutil.copy2(video.src_path, video.target_path)
+            shutil.copy2(img.src_path, img.target_path)
+            shutil.copy2(video.src_path, video.target_path)
             continue
 
         if has_img(v):
             img = pick_img(v)
             print(f'pick id={k} img={img.target_path}')
-            # shutil.copy2(img.src_path, img.target_path)
+            shutil.copy2(img.src_path, img.target_path)
             continue
 
         if(has_video(v)):
             video = pick_video(v)
             print(f'pick id={k} video={video.target_path}')
-            # shutil.copy2(video.src_path, video.target_path)
+            shutil.copy2(video.src_path, video.target_path)
             continue
 
 
 CACHE_FILE = f'{pathlib.Path.home()}/Downloads/nz-au/media_meta_files.json'
-TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/final_datetime_name_excluded_merge_stills/'
+TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/final_datetime_name_excluded_merge/'
 EXCLUSION_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/NZ AU leftovers/'
 DIRS = [
     f'{pathlib.Path.home()}/Downloads/nz-au/Auckland NZ Pics',
