@@ -39,6 +39,7 @@ def get_md5(path: pathlib.Path):
 
 def get_tags(filename: str, md5_store: dict, uuid_store: dict):
     curr_path = pathlib.Path(filename)
+    print(curr_path)
 
     try:
         if 'gif' in curr_path.suffix.lower():
@@ -121,20 +122,20 @@ def post_process(store: dict):
             img = pick_img(v)
             video = pick_video(v)
             print(f'pick id={k} img={img.target_path} video={video.target_path}')
-            # shutil.move(img.src_path, img.target_path)
-            # shutil.move(video.src_path, video.target_path)
+            # shutil.copy2(img.src_path, img.target_path)
+            # shutil.copy2(video.src_path, video.target_path)
             continue
 
         if has_img(v):
             img = pick_img(v)
             print(f'pick id={k} img={img.target_path}')
-            # shutil.move(img.src_path, img.target_path)
+            # shutil.copy2(img.src_path, img.target_path)
             continue
 
         if(has_video(v)):
             video = pick_video(v)
             print(f'pick id={k} video={video.target_path}')
-            # shutil.move(video.src_path, video.target_path)
+            # shutil.copy2(video.src_path, video.target_path)
             continue
 
 
@@ -213,8 +214,8 @@ for key in exclude_md5_keys:
 
 print(f'found {len(include_uuid)} uuid media files')
 post_process(include_uuid)
-pp.pprint(include_uuid)
+# pp.pprint(include_uuid)
 
 print(f'found {len(include_md5)} md5 media files')
 post_process(include_md5)
-pp.pprint(include_md5)
+# pp    .pprint(include_md5)
