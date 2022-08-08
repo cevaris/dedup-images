@@ -2,6 +2,11 @@
 # https://github.com/carsales/pyheif/issues/36
 # https://www.thepythoncode.com/article/extract-media-metadata-in-python
 
+
+# NOTE: to be used with file_exiftool.py; which collects the metadata from the files
+#       and dumps it to a json file. This is then used to create the media_metadata_dict
+#       dictionary below for quick processing.
+
 import hashlib
 import json
 import os
@@ -10,14 +15,9 @@ import pprint
 import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor, wait
-from importlib.metadata import metadata
 from typing import List
 
-# exiftool
-import exiftool
-
 pp = pprint.PrettyPrinter(indent=4)
-CANON_POWERSHOT = 'Canon PowerShot SX50 HS'
 
 class MediaFile(object):
     def __init__(self, id: str, src_path: pathlib.Path, target_path: pathlib.Path):
@@ -39,7 +39,6 @@ def get_md5(path: pathlib.Path):
 
 def get_tags(filename: str, md5_store: dict, uuid_store: dict):
     curr_path = pathlib.Path(filename)
-    print(curr_path)
 
     try:
         if 'gif' in curr_path.suffix.lower():
@@ -122,20 +121,20 @@ def post_process(store: dict):
             img = pick_img(v)
             video = pick_video(v)
             print(f'pick id={k} img={img.target_path} video={video.target_path}')
-            shutil.copy2(img.src_path, img.target_path)
-            shutil.copy2(video.src_path, video.target_path)
+            # shutil.copy2(img.src_path, img.target_path)
+            # shutil.copy2(video.src_path, video.target_path)
             continue
 
         if has_img(v):
             img = pick_img(v)
             print(f'pick id={k} img={img.target_path}')
-            shutil.copy2(img.src_path, img.target_path)
+            # shutil.copy2(img.src_path, img.target_path)
             continue
 
         if(has_video(v)):
             video = pick_video(v)
             print(f'pick id={k} video={video.target_path}')
-            shutil.copy2(video.src_path, video.target_path)
+            # shutil.copy2(video.src_path, video.target_path)
             continue
 
 
@@ -218,4 +217,4 @@ post_process(include_uuid)
 
 print(f'found {len(include_md5)} md5 media files')
 post_process(include_md5)
-# pp    .pprint(include_md5)
+# pp.pprint(include_md5)
