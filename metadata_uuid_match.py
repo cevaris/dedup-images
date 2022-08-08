@@ -7,6 +7,7 @@
 #       and dumps it to a json file. This is then used to create the media_metadata_dict
 #       dictionary below for quick processing.
 
+import glob
 import hashlib
 import json
 import os
@@ -16,6 +17,9 @@ import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor, wait
 from typing import List
+
+total_media = 0
+dropped_videos = 0
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -114,32 +118,41 @@ def pick_video(medias: List[MediaFile]) -> MediaFile:
 
 
 def post_process(store: dict):
+    global total_media
+    global dropped_videos
+
     for k, v in store.items():
         # if media contains heic/jpg/jpeg/png & MOV, drop MOV
         # if media contains heic/jpg/jpeg/png & MP4, drop MP4
         if(has_video(v) and has_img(v)):
+            dropped_videos += 1
+            total_media += 1
             img = pick_img(v)
-            video = pick_video(v)
-            print(f'pick id={k} img={img.target_path} video={video.target_path}')
-            # shutil.copy2(img.src_path, img.target_path)
+            shutil.copy2(img.src_path, img.target_path)
+
+            # video = pick_video(v)
             # shutil.copy2(video.src_path, video.target_path)
+
+            # print(f'pick id={k} img={img.target_path} video={video.target_path}')
             continue
 
         if has_img(v):
             img = pick_img(v)
-            print(f'pick id={k} img={img.target_path}')
-            # shutil.copy2(img.src_path, img.target_path)
+            total_media += 1
+            # print(f'pick id={k} img={img.target_path}')
+            shutil.copy2(img.src_path, img.target_path)
             continue
 
         if(has_video(v)):
             video = pick_video(v)
-            print(f'pick id={k} video={video.target_path}')
-            # shutil.copy2(video.src_path, video.target_path)
+            total_media += 1
+            # print(f'pick id={k} video={video.target_path}')
+            shutil.copy2(video.src_path, video.target_path)
             continue
 
 
 CACHE_FILE = f'{pathlib.Path.home()}/Downloads/nz-au/media_meta_files.json'
-TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/final_datetime_name_excluded_merge/'
+TARGET_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/final_datetime_name_excluded_merge_stills/'
 EXCLUSION_DIR = f'{pathlib.Path.home()}/Downloads/nz-au/NZ AU leftovers/'
 DIRS = [
     f'{pathlib.Path.home()}/Downloads/nz-au/Auckland NZ Pics',
@@ -218,3 +231,6 @@ post_process(include_uuid)
 print(f'found {len(include_md5)} md5 media files')
 post_process(include_md5)
 # pp.pprint(include_md5)
+
+print(f'found {total_media} media files')
+print(f'dropped {dropped_videos} live motion video files')
