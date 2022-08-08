@@ -31,6 +31,8 @@ grep EFFECTS ~/Desktop/hash-all.txt | xargs -I{} cp -f {} ~/Downloads/union
   - Originally uploaded content, that still has live-motion photos, and misc videos. This was used to prevent uploading locally dedupled data, that has already been uploaded.
 - [final-dedup-missing-media-with-live-motion.zip](https://drive.google.com/file/d/1OX_C71uYJPN8nYYqG6PQBygd3zQsT95v/view)
   - Final dataset. This dataset was not uploaded as is, rather live-motion videos were removed from live pics first, then it was  uploaded. So only live motion pics (without paired videos) and actual non-motion video recordings were uploaded. This zip contains all deduplicated locally and previously uploaded "NZ AU leftovers" media.
+- [final_datetime_name_excluded_merge_stills.zip](https://drive.google.com/file/d/1B7TXqcAFrAxqqRSQ0AhCIvqKIXrjEELz/view?usp=sharing)
+  - This was what was actually uploaded on 8/8/22, the ~734 files that were missing from Google Photos "leftovers" media.
 - [Auckland NZ Pics.zip](https://drive.google.com/file/d/15nz1PnP3NqlfaUVhpCHuRwsIbNwKZHhQ/view?usp=sharing)
   - Random media
 - [Dec 2019 NZ_AU Trip Album.zip](https://drive.google.com/file/d/1IjxjyxVfXWmhfLGDcO_CTqhq8Ur5_wc3/view?usp=sharing)
