@@ -22,14 +22,16 @@ if len(sys.argv) != 3:
 RAW_DIR = sys.argv[1]
 PROCESSED_DIR = sys.argv[2]
 
-OUTPUT_DIR = f"{PROCESSED_DIR}-meta"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+# OUTPUT_DIR = f"{PROCESSED_DIR}-meta"
+# os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def copy_meta(raw_file_path, processed_file_path):
     # use ffmpeg -map_metadata to copy metadata from raw_file to processed_file
     # patched_file_path  = os.path.join(f"{PROCESSED_DIR}-meta", os.path.basename(processed_file_path))
     # os.system(f"ffmpeg -i {raw_file_path} -i {processed_file_path} -map 1 -movflags use_metadata_tags -map_metadata 0 -c copy {patched_file_path}")
-    os.system(f"exiftool -tagsFromFile {raw_file_path} -GPSLatitude -GPSLongitude -GPSCoordinates -GPSPosition -time:all -geotag:all {processed_file_path}")
+
+    # -delete_original https://exiftool.org/forum/index.php?topic=5514.0
+    os.system(f"exiftool -tagsFromFile {raw_file_path} -CreateDate -ModifyDate -TrackCreateDate -TrackModifyDate -MediaCreateDate -GPSLatitude -GPSLongitude -GPSCoordinates -GPSPosition -geotag:all {processed_file_path}")
 
 
 raw_files = os.listdir(RAW_DIR)
